@@ -1,39 +1,130 @@
 <!DOCTYPE html>
 <html lang="ja">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
     <title>ファイル拡張子変更ツール</title>
-</head>
-<body>
+    <style>
+      body {
+        background-color: #121212;
+        color: #fff;
+      }
+
+      a {
+        color: #bdbdbd;
+        text-decoration: none;
+      }
+
+      a:hover {
+        color: #fff;
+      }
+
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6 {
+        color: #fff;
+      }
+
+      p {
+        color: #e0e0e0;
+      }
+
+      .card {
+        background-color: #212121;
+        color: #fff;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+      }
+
+      .card-header {
+        background-color: #3f3f3f;
+        color: #fff;
+        padding: 15px;
+      }
+
+      .card-title {
+        font-size: 18px;
+      }
+
+      .card-body {
+        padding: 15px;
+      }
+
+      .card-text {
+        color: #e0e0e0;
+      }
+
+      .btn {
+        background-color: #4caf50; /* Green */
+        border: none;
+        color: white;
+        padding: 10px 20px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+        margin: 4px 2px;
+        cursor: pointer;
+      }
+
+      .btn:hover {
+        background-color: #3e8e41;
+      }
+
+      .fab {
+        margin: 20px;
+      }
+
+      .fab-icon {
+        font-size: 36px;
+      }
+
+      .icon {
+        color: #fff;
+      }
+
+      .footer {
+        background-color: #3f3f3f;
+        color: #fff;
+        padding: 15px;
+      }
+    </style>
+  </head>
+  <body>
     <h1>ファイル拡張子変更ツール</h1>
-    <input type="file" id="fileInput">
+    <input type="file" id="fileInput" />
+    <label for="newExtension">新しい拡張子:</label>
+    <input type="text" id="newExtension" value="new_extension" />
     <button onclick="downloadFile()">ダウンロード</button>
 
     <script>
-        function downloadFile() {
-            const fileInput = document.getElementById('fileInput');
-            const file = fileInput.files[0];
+      function downloadFile() {
+        const fileInput = document.getElementById("fileInput");
+        const file = fileInput.files[0];
+        const newExtensionInput = document.getElementById("newExtension");
+        const newExtension = newExtensionInput.value;
 
-            if (file) {
-                const filename = file.name;
-                const extension = filename.split('.').pop();
-                const newFilename = filename.replace(extension, 'new_extension');
+        if (file && newExtension) {
+          const filename = file.name;
+          const extension = filename.split(".").pop();
+          const newFilename = filename.replace(extension, newExtension);
 
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const blob = new Blob([e.target.result], { type: file.type });
-                    const url = URL.createObjectURL(blob);
+          const reader = new FileReader();
+          reader.onload = function (e) {
+            const blob = new Blob([e.target.result], { type: file.type });
+            const url = URL.createObjectURL(blob);
 
-                    const link = document.createElement('a');
-                    link.href = url;
-                    link.download = newFilename;
-                    link.click();
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = newFilename;
+            link.click();
 
-                    URL.revokeObjectURL(url);
-                };
-                reader.readAsBinaryString(file);
-            }
+            URL.revokeObjectURL(url);
+          };
+          reader.readAsBinaryString(file);
         }
+      }
     </script>
-</body>
+  </body>
 </html>
