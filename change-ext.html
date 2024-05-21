@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>ファイル拡張子変更ツール</title>
+</head>
+<body>
+    <h1>ファイル拡張子変更ツール</h1>
+    <input type="file" id="fileInput">
+    <button onclick="downloadFile()">ダウンロード</button>
+
+    <script>
+        function downloadFile() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+
+            if (file) {
+                const filename = file.name;
+                const extension = filename.split('.').pop();
+                const newFilename = filename.replace(extension, 'new_extension');
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const blob = new Blob([e.target.result], { type: file.type });
+                    const url = URL.createObjectURL(blob);
+
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = newFilename;
+                    link.click();
+
+                    URL.revokeObjectURL(url);
+                };
+                reader.readAsBinaryString(file);
+            }
+        }
+    </script>
+</body>
+</html>
