@@ -1,0 +1,70 @@
+body {
+  font-family: sans-serif;
+  margin: 20px;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#input-text,
+#insert-char {
+  padding: 10px;
+  margin: 10px;
+  color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  width: 300px;
+}
+
+.insert-end-text {
+  display: flex;
+  align-items: center;
+  margin: 10px;
+}
+
+#insert-end {
+  margin-left: 10px;
+  zoom: 1.5;
+}
+
+#insert-btn,
+#copy-btn {
+  padding: 10px 20px;
+  margin: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  cursor: pointer;
+  background-color: #36393f;
+  color: #fff;
+}
+
+#output {
+  padding: 10px;
+  margin: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  width: 300px;
+  background-color: #2f3136;
+  color: #fff;
+}
+
+body {
+  background-color: #2f3136;
+  color: #fff;
+}
+
+#input-text,
+#insert-char,
+#insert-btn,
+#copy-btn {
+  background-color: #36393f;
+  border-color: #4f545c;
+}
+
+#output {
+  background-color: #2f3136;
+  border-color: #4f545c;
+}
