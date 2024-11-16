@@ -1,0 +1,158 @@
+<!DOCTYPE html><html><head><meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://code.jquery.com https://unpkg.com https://d3js.org https://threejs.org https://cdn.plot.ly https://stackpath.bootstrapcdn.com https://maps.googleapis.com https://cdn.tailwindcss.com https://ajax.googleapis.com https://kit.fontawesome.com https://cdn.datatables.net https://maxcdn.bootstrapcdn.com https://code.highcharts.com https://tako-static-assets-production.s3.amazonaws.com https://www.youtube.com https://fonts.googleapis.com https://fonts.gstatic.com https://pfst.cf2.poecdn.net https://puc.poecdn.net https://i.imgur.com https://wikimedia.org https://*.icons8.com https://*.giphy.com https://picsum.photos https://images.unsplash.com; frame-src 'self' https://www.youtube.com https://trytako.com; child-src 'self'; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests; block-all-mixed-content;">
+    <meta charset="UTF-8">
+    <title>季節と天候が変わる風景</title>
+    <style>
+        canvas {
+            border: 1px solid #000;
+            display: block;
+            margin: 20px auto;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="natureCanvas" width="800" height="600"></canvas>
+
+    <script>
+        const canvas = document.getElementById('natureCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // 季節の定義
+        const seasons = ['spring', 'summer', 'autumn', 'winter'];
+        const weather = ['sunny', 'rainy', 'cloudy', 'snowy'];
+        const times = ['morning', 'noon', 'evening', 'night'];
+
+        // ランダムな設定を取得
+        const currentSeason = seasons[Math.floor(Math.random() * seasons.length)];
+        const currentWeather = weather[Math.floor(Math.random() * weather.length)];
+        const currentTime = times[Math.floor(Math.random() * times.length)];
+
+        // 背景色の設定
+        function setBackground() {
+            let skyColor;
+            switch(currentTime) {
+                case 'morning':
+                    skyColor = '#87CEEB';
+                    break;
+                case 'noon':
+                    skyColor = '#4BA4E3';
+                    break;
+                case 'evening':
+                    skyColor = '#FF7F50';
+                    break;
+                case 'night':
+                    skyColor = '#191970';
+                    break;
+            }
+
+            // 空の描画
+            ctx.fillStyle = skyColor;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 地面の描画
+            let groundColor;
+            switch(currentSeason) {
+                case 'spring':
+                    groundColor = '#90EE90';
+                    break;
+                case 'summer':
+                    groundColor = '#32CD32';
+                    break;
+                case 'autumn':
+                    groundColor = '#DEB887';
+                    break;
+                case 'winter':
+                    groundColor = '#FFFFFF';
+                    break;
+            }
+            ctx.fillStyle = groundColor;
+            ctx.fillRect(0, canvas.height * 0.7, canvas.width, canvas.height * 0.3);
+        }
+
+        // 木を描画する関数
+        function drawTree(x, y, season) {
+            // 幹の描画
+            ctx.fillStyle = '#8B4513';
+            ctx.fillRect(x - 10, y - 100, 20, 100);
+
+            // 葉の描画
+            let leafColor;
+            switch(season) {
+                case 'spring':
+                    leafColor = '#98FB98';
+                    break;
+                case 'summer':
+                    leafColor = '#228B22';
+                    break;
+                case 'autumn':
+                    leafColor = '#FFA500';
+                    break;
+                case 'winter':
+                    leafColor = '#808080';
+                    break;
+            }
+
+            ctx.beginPath();
+            ctx.fillStyle = leafColor;
+            ctx.arc(x, y - 120, 40, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // 天候効果を追加する関数
+        function addWeatherEffect() {
+            if (currentWeather === 'rainy') {
+                for (let i = 0; i < 100; i++) {
+                    const x = Math.random() * canvas.width;
+                    const y = Math.random() * canvas.height;
+                    ctx.beginPath();
+                    ctx.strokeStyle = '#FFFFFF';
+                    ctx.moveTo(x, y);
+                    ctx.lineTo(x + 10, y + 10);
+                    ctx.stroke();
+                }
+            } else if (currentWeather === 'snowy') {
+                for (let i = 0; i < 100; i++) {
+                    const x = Math.random() * canvas.width;
+                    const y = Math.random() * canvas.height;
+                    ctx.beginPath();
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.arc(x, y, 2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            } else if (currentWeather === 'cloudy') {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+                for (let i = 0; i < 5; i++) {
+                    const x = Math.random() * canvas.width;
+                    const y = Math.random() * (canvas.height / 2);
+                    ctx.beginPath();
+                    ctx.arc(x, y, 40, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+        }
+
+        // シーンの描画
+        function drawScene() {
+            setBackground();
+            
+            // 複数の木を描画
+            for (let i = 0; i < 5; i++) {
+                const x = 100 + i * 150;
+                const y = canvas.height * 0.7;
+                drawTree(x, y, currentSeason);
+            }
+
+            addWeatherEffect();
+
+            // 情報表示
+            ctx.fillStyle = '#000000';
+            ctx.font = '20px Arial';
+            ctx.fillText(`Season: ${currentSeason}`, 10, 30);
+            ctx.fillText(`Weather: ${currentWeather}`, 10, 60);
+            ctx.fillText(`Time: ${currentTime}`, 10, 90);
+        }
+
+        drawScene();
+    </script>
+
+
+</body></html>
