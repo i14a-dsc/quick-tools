@@ -18,376 +18,395 @@
     </style>
   </head>
   <body>
-    <canvas id="natureCanvas" width="800" height="600"></canvas>
+    <canvas id="natureCanvas" width="1280" height="720"></canvas>
 
     <script>
-      const canvas = document.getElementById('natureCanvas');
-      const ctx = canvas.getContext('2d');
+document.addEventListener('keydown', event => {
+  if (event.key === 'r') location.reload();
+});
 
-      const seasons = ['spring', 'summer', 'autumn', 'winter'];
-      const baseWeather = ['sunny', 'cloudy'];
-      const times = ['morning', 'noon', 'evening', 'night'];
+const canvas = document.getElementById('natureCanvas');
+const ctx = canvas.getContext('2d');
 
-      // 風の強さを定義
-      const windStrength = Math.random() * 5; // 0-5の風の強さ
-      const windDirection = Math.random() < 0.5 ? -1 : 1; // 風の方向（左か右）
+const seasons = ['spring', 'summer', 'autumn', 'winter'];
+const baseWeather = ['sunny', 'cloudy'];
+const times = ['morning', 'noon', 'evening', 'night'];
 
-      const currentSeason = seasons[Math.floor(Math.random() * seasons.length)];
-      const currentTime = times[Math.floor(Math.random() * times.length)];
+const windStrength = Math.random() * 5;
+const windDirection = Math.random() < 0.5 ? -1 : 1;
 
-      let possibleWeather = [...baseWeather];
-      switch (currentSeason) {
-        case 'spring':
-        case 'autumn':
-          possibleWeather.push('rainy');
-          break;
-        case 'summer':
-          if (Math.random() < 0.3) {
-            possibleWeather.push('rainy');
-          }
-          break;
-        case 'winter':
-          possibleWeather.push('snowy');
-          break;
-      }
+const currentSeason = seasons[Math.floor(Math.random() * seasons.length)];
+const currentTime = times[Math.floor(Math.random() * times.length)];
 
-      let currentWeather = possibleWeather[Math.floor(Math.random() * possibleWeather.length)];
+let possibleWeather = [...baseWeather];
+switch (currentSeason) {
+  case 'spring':
+  case 'autumn':
+    possibleWeather.push('rainy');
+    break;
+  case 'summer':
+    if (Math.random() < 0.3) {
+      possibleWeather.push('rainy');
+    }
+    break;
+  case 'winter':
+    possibleWeather.push('snowy');
+    break;
+}
 
-      let trees = [];
-      let particles = [];
-      let clouds = [];
-      let windParticles = []; // 風のパーティクル用配列
+let currentWeather = possibleWeather[Math.floor(Math.random() * possibleWeather.length)];
 
-      // 風のパーティクルクラス
-      class WindParticle {
-        constructor() {
-          this.reset();
-        }
+let trees = [];
+let particles = [];
+let clouds = [];
+let windParticles = [];
 
-        reset() {
-          this.x = windDirection > 0 ? -10 : canvas.width + 10;
-          this.y = Math.random() * canvas.height * 0.7;
-          this.length = (5 + Math.random() * 15) * (windStrength / 2);
-          this.speed = (3 + Math.random() * 2) * windStrength;
-          this.opacity = 0.1 + Math.random() * 0.2;
-        }
+class WindParticle {
+  constructor() {
+    this.reset();
+  }
 
-        update() {
-          this.x += this.speed * windDirection;
-          if (
-            (windDirection > 0 && this.x > canvas.width + 10) ||
-            (windDirection < 0 && this.x < -10)
-          ) {
-            this.reset();
-          }
-        }
+  reset() {
+    this.x = windDirection > 0 ? -10 : canvas.width + 10;
+    this.y = Math.random() * canvas.height * 0.7;
+    // 風のパーティクルを長くする
+    this.length = (10 + Math.random() * 25) * (windStrength / 2);
+    this.speed = (3 + Math.random() * 2) * windStrength;
+    this.opacity = 0.1 + Math.random() * 0.2;
+    // 曲線の制御用パラメータを追加
+    this.curveAmplitude = Math.random() * 5;
+    this.curveFrequency = Math.random() * 0.1;
+    this.phase = Math.random() * Math.PI * 2;
+  }
 
-        draw() {
-          ctx.beginPath();
-          ctx.strokeStyle = `rgba(255, 255, 255, ${this.opacity})`;
-          ctx.moveTo(this.x, this.y);
-          ctx.lineTo(this.x + this.length * windDirection, this.y);
-          ctx.stroke();
-        }
-      }
+  update() {
+    this.x += this.speed * windDirection;
+    if (
+      (windDirection > 0 && this.x > canvas.width + 10) ||
+      (windDirection < 0 && this.x < -10)
+    ) {
+      this.reset();
+    }
+  }
 
-      class Particle {
-        constructor() {
-          this.reset();
-        }
+  draw() {
+    ctx.beginPath();
+    ctx.strokeStyle = `rgba(255, 255, 255, ${this.opacity})`;
+    
+    // 曲線のパスを描画
+    const points = 10; // 曲線の制御点数
+    ctx.moveTo(this.x, this.y);
+    
+    for (let i = 1; i <= points; i++) {
+      const t = i / points;
+      const x = this.x + this.length * windDirection * t;
+      const y = this.y + Math.sin(this.phase + t * Math.PI) * this.curveAmplitude;
+      ctx.lineTo(x, y);
+    }
+    
+    ctx.stroke();
+  }
+}
 
-        reset() {
-          this.x = Math.random() * canvas.width;
-          this.y = Math.random() * canvas.height - canvas.height;
-          this.speed = currentWeather === 'snowy' ? 1 + Math.random() : 4 + Math.random() * 2;
-          this.size = currentWeather === 'snowy' ? 2 + Math.random() : 1;
-          // 風の影響を考慮した横方向の移動量
-          this.wind = windDirection * (windStrength / 2) + (Math.random() - 0.5) * 0.5;
-        }
+class Particle {
+  constructor() {
+    this.reset();
+  }
 
-        update() {
-          this.y += this.speed;
-          // 風の強さに応じてx座標を更新
-          if (currentWeather === 'snowy') {
-            this.x += Math.sin(this.y / 50) * 0.3 + this.wind;
-          } else if (currentWeather === 'rainy') {
-            this.x += this.wind;
-          }
-          if (this.y > canvas.height) {
-            this.reset();
-          }
-        }
+  reset() {
+    this.x = Math.random() * canvas.width;
+    this.y = Math.random() * canvas.height - canvas.height;
+    this.speed = currentWeather === 'snowy' ? 1 + Math.random() : 4 + Math.random() * 2;
+    this.size = currentWeather === 'snowy' ? 2 + Math.random() : 1;
+    // 風の影響をより自然に調整
+    this.windEffect = windDirection * (windStrength / 2);
+    this.horizontalSpeed = this.windEffect + (Math.random() - 0.5) * 0.5;
+  }
 
-        draw() {
-          if (currentWeather === 'sunny' || currentWeather === 'cloudy') {
-            return;
-          }
+  update() {
+    this.y += this.speed;
+    if (currentWeather === 'snowy') {
+      this.x += Math.sin(this.y / 50) * 0.3 + this.horizontalSpeed;
+    } else if (currentWeather === 'rainy') {
+      this.x += this.horizontalSpeed;
+    }
+    if (this.y > canvas.height) {
+      this.reset();
+    }
+  }
 
-          if (currentWeather === 'snowy') {
-            ctx.beginPath();
-            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-            ctx.fill();
-          } else if (currentWeather === 'rainy') {
-            ctx.beginPath();
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
-            // 風の強さに応じて雨の角度を変える
-            const rainAngle = Math.atan2(this.speed, this.wind);
-            const rainLength = 7;
-            ctx.moveTo(this.x, this.y);
-            ctx.lineTo(
-              this.x + Math.sin(rainAngle) * rainLength,
-              this.y + Math.cos(rainAngle) * rainLength
-            );
-            ctx.stroke();
-          }
-        }
-      }
+  draw() {
+    if (currentWeather === 'sunny' || currentWeather === 'cloudy') {
+      return;
+    }
 
-      class Cloud {
-        constructor() {
-          this.reset();
-        }
+    if (currentWeather === 'snowy') {
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+      ctx.fill();
+    } else if (currentWeather === 'rainy') {
+      ctx.beginPath();
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+      
+      // 風の強さと速度に基づいて雨の角度を計算
+      const verticalSpeed = this.speed;
+      const horizontalSpeed = this.horizontalSpeed * 2; // 風の効果を強調
+      const rainAngle = Math.atan2(verticalSpeed, horizontalSpeed);
+      
+      // 雨の長さを風の強さに応じて調整
+      const rainLength = 7 * (1 + Math.abs(this.horizontalSpeed) / 4);
+      
+      ctx.moveTo(this.x, this.y);
+      ctx.lineTo(
+        this.x + Math.cos(rainAngle) * rainLength,
+        this.y + Math.sin(rainAngle) * rainLength
+      );
+      ctx.stroke();
+    }
+  }
+}
 
-        reset() {
-          this.x = Math.random() * (canvas.width + 200) - 100;
-          this.y = Math.random() * (canvas.height * 0.4);
-          // 風の強さを雲の速度に反映
-          this.speed = (0.2 + Math.random() * 0.2) * (1 + windStrength / 2) * windDirection;
-          this.size = 30 + Math.random() * 30;
-          this.opacity = 0.3 + Math.random() * 0.2;
-        }
+class Cloud {
+  constructor() {
+    this.reset();
+  }
 
-        update() {
-          this.x += this.speed;
-          if (
-            (windDirection > 0 && this.x > canvas.width + 100) ||
-            (windDirection < 0 && this.x < -100)
-          ) {
-            this.x = windDirection > 0 ? -100 : canvas.width + 100;
-            this.y = Math.random() * (canvas.height * 0.4);
-          }
-        }
+  reset() {
+    this.x = Math.random() * (canvas.width + 200) - 100;
+    this.y = Math.random() * (canvas.height * 0.4);
+    this.speed = (0.2 + Math.random() * 0.2) * (1 + windStrength / 2) * windDirection;
+    this.size = 30 + Math.random() * 30;
+    this.opacity = 0.3 + Math.random() * 0.2;
+  }
 
-        draw() {
-          ctx.beginPath();
-          ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`;
-          ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-          ctx.arc(
-            this.x + this.size * 0.5,
-            this.y - this.size * 0.2,
-            this.size * 0.7,
-            0,
-            Math.PI * 2
-          );
-          ctx.arc(
-            this.x - this.size * 0.5,
-            this.y - this.size * 0.2,
-            this.size * 0.7,
-            0,
-            Math.PI * 2
-          );
-          ctx.fill();
-        }
-      }
+  update() {
+    this.x += this.speed;
+    if (
+      (windDirection > 0 && this.x > canvas.width + 100) ||
+      (windDirection < 0 && this.x < -100)
+    ) {
+      this.x = windDirection > 0 ? -100 : canvas.width + 100;
+      this.y = Math.random() * (canvas.height * 0.4);
+    }
+  }
 
-      function initWindParticles() {
-        windParticles = [];
-        if (windStrength > 1.5) {
-          // 一定以上の風の強さで風パーティクルを生成
-          const particleCount = Math.floor(windStrength * 10);
-          for (let i = 0; i < particleCount; i++) {
-            windParticles.push(new WindParticle());
-          }
-        }
-      }
+  draw() {
+    ctx.beginPath();
+    ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`;
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.arc(
+      this.x + this.size * 0.5,
+      this.y - this.size * 0.2,
+      this.size * 0.7,
+      0,
+      Math.PI * 2
+    );
+    ctx.arc(
+      this.x - this.size * 0.5,
+      this.y - this.size * 0.2,
+      this.size * 0.7,
+      0,
+      Math.PI * 2
+    );
+    ctx.fill();
+  }
+}
 
-      // 以下の関数は変更なし
-      function initTrees() {
-        trees = [];
-        const numTrees = 5 + Math.floor(Math.random() * 3);
-        const gridSize = canvas.width / (numTrees + 1);
+function initWindParticles() {
+  windParticles = [];
+  if (windStrength > 1.5) {
+    const particleCount = Math.floor(windStrength * 10);
+    for (let i = 0; i < particleCount; i++) {
+      windParticles.push(new WindParticle());
+    }
+  }
+}
 
-        for (let i = 0; i < numTrees; i++) {
-          const baseX = gridSize * (i + 1);
-          const tree = {
-            x: baseX + (Math.random() - 0.5) * (gridSize * 0.5),
-            y: canvas.height * 0.7 + Math.random() * 10,
-            scale: 0.8 + Math.random() * 0.3,
-            leafVariant: Math.floor(Math.random() * 3),
-          };
-          trees.push(tree);
-        }
-      }
+function initTrees() {
+  trees = [];
+  const numTrees = 5 + Math.floor(Math.random() * 3);
+  const gridSize = canvas.width / (numTrees + 1);
 
-      function initParticles() {
-        particles = [];
-        if (currentWeather === 'rainy' || currentWeather === 'snowy') {
-          const particleCount = currentWeather === 'snowy' ? 100 : 70;
-          for (let i = 0; i < particleCount; i++) {
-            particles.push(new Particle());
-          }
-        }
-      }
+  for (let i = 0; i < numTrees; i++) {
+    const baseX = gridSize * (i + 1);
+    const tree = {
+      x: baseX + (Math.random() - 0.5) * (gridSize * 0.5),
+      y: canvas.height * 0.7 + Math.random() * 10,
+      scale: 0.8 + Math.random() * 0.3,
+      leafVariant: Math.floor(Math.random() * 3),
+    };
+    trees.push(tree);
+  }
+}
 
-      function initClouds() {
-        clouds = [];
-        if (
-          currentWeather === 'cloudy' ||
-          currentWeather === 'rainy' ||
-          currentWeather === 'snowy'
-        ) {
-          const cloudCount = Math.min(4 + Math.floor(Math.random() * 2), 5);
-          for (let i = 0; i < cloudCount; i++) {
-            clouds.push(new Cloud());
-          }
-        }
-      }
+function initParticles() {
+  particles = [];
+  if (currentWeather === 'rainy' || currentWeather === 'snowy') {
+    const particleCount = currentWeather === 'snowy' ? 100 : 70;
+    for (let i = 0; i < particleCount; i++) {
+      particles.push(new Particle());
+    }
+  }
+}
 
-      function setBackground() {
-        let skyColor;
-        switch (currentTime) {
-          case 'morning':
-            skyColor = '#87CEEB';
-            break;
-          case 'noon':
-            skyColor = '#4BA4E3';
-            break;
-          case 'evening':
-            skyColor = '#FF7F50';
-            break;
-          case 'night':
-            skyColor = '#191970';
-            break;
-        }
+function initClouds() {
+  clouds = [];
+  if (
+    currentWeather === 'cloudy' ||
+    currentWeather === 'rainy' ||
+    currentWeather === 'snowy'
+  ) {
+    const cloudCount = Math.min(4 + Math.floor(Math.random() * 2), 5);
+    for (let i = 0; i < cloudCount; i++) {
+      clouds.push(new Cloud());
+    }
+  }
+}
 
-        ctx.fillStyle = skyColor;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+function setBackground() {
+  let skyColor;
+  switch (currentTime) {
+    case 'morning':
+      skyColor = '#87CEEB';
+      break;
+    case 'noon':
+      skyColor = '#4BA4E3';
+      break;
+    case 'evening':
+      skyColor = '#FF7F50';
+      break;
+    case 'night':
+      skyColor = '#191970';
+      break;
+  }
 
-        let groundColor;
-        switch (currentSeason) {
-          case 'spring':
-            groundColor = '#90EE90';
-            break;
-          case 'summer':
-            groundColor = '#32CD32';
-            break;
-          case 'autumn':
-            groundColor = '#DEB887';
-            break;
-          case 'winter':
-            groundColor = '#FFFFFF';
-            break;
-        }
-        ctx.fillStyle = groundColor;
-        ctx.fillRect(0, canvas.height * 0.7, canvas.width, canvas.height * 0.3);
-      }
+  ctx.fillStyle = skyColor;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      function drawTree(tree) {
-        const { x, y, scale, leafVariant } = tree;
-        const trunkHeight = 100 * scale;
-        const trunkWidth = 20 * scale;
+  let groundColor;
+  switch (currentSeason) {
+    case 'spring':
+      groundColor = '#90EE90';
+      break;
+    case 'summer':
+      groundColor = '#32CD32';
+      break;
+    case 'autumn':
+      groundColor = '#DEB887';
+      break;
+    case 'winter':
+      groundColor = '#FFFFFF';
+      break;
+  }
+  ctx.fillStyle = groundColor;
+  ctx.fillRect(0, canvas.height * 0.7, canvas.width, canvas.height * 0.3);
+}
 
-        let leafColor;
-        switch (currentSeason) {
-          case 'spring':
-            leafColor = '#98FB98';
-            break;
-          case 'summer':
-            leafColor = '#228B22';
-            break;
-          case 'autumn':
-            leafColor = '#FFA500';
-            break;
-          case 'winter':
-            leafColor = '#808080';
-            break;
-        }
+function drawTree(tree) {
+  const { x, y, scale, leafVariant } = tree;
+  const trunkHeight = 100 * scale;
+  const trunkWidth = 20 * scale;
 
-        switch (leafVariant) {
-          case 0:
-            ctx.fillStyle = '#8B4513';
-            ctx.fillRect(x - trunkWidth / 2, y - trunkHeight, trunkWidth, trunkHeight);
+  let leafColor;
+  switch (currentSeason) {
+    case 'spring':
+      leafColor = '#98FB98';
+      break;
+    case 'summer':
+      leafColor = '#228B22';
+      break;
+    case 'autumn':
+      leafColor = '#FFA500';
+      break;
+    case 'winter':
+      leafColor = '#808080';
+      break;
+  }
 
-            ctx.fillStyle = leafColor;
-            ctx.beginPath();
-            ctx.arc(x, y - trunkHeight - 35 * scale, 35 * scale, 0, Math.PI * 2);
-            ctx.fill();
-            break;
+  switch (leafVariant) {
+    case 0:
+      ctx.fillStyle = '#8B4513';
+      ctx.fillRect(x - trunkWidth / 2, y - trunkHeight, trunkWidth, trunkHeight);
 
-          case 1:
-            ctx.fillStyle = '#8B4513';
-            ctx.fillRect(x - trunkWidth / 2, y - trunkHeight, trunkWidth, trunkHeight);
+      ctx.fillStyle = leafColor;
+      ctx.beginPath();
+      ctx.arc(x, y - trunkHeight - 35 * scale, 35 * scale, 0, Math.PI * 2);
+      ctx.fill();
+      break;
 
-            ctx.fillStyle = leafColor;
-            ctx.beginPath();
-            ctx.moveTo(x, y - trunkHeight - 60 * scale);
-            ctx.lineTo(x - 40 * scale, y - trunkHeight);
-            ctx.lineTo(x + 40 * scale, y - trunkHeight);
-            ctx.closePath();
-            ctx.fill();
-            break;
+    case 1:
+      ctx.fillStyle = '#8B4513';
+      ctx.fillRect(x - trunkWidth / 2, y - trunkHeight, trunkWidth, trunkHeight);
 
-          case 2:
-            ctx.fillStyle = '#8B4513';
-            ctx.fillRect(x - trunkWidth / 2, y - trunkHeight, trunkWidth, trunkHeight);
+      ctx.fillStyle = leafColor;
+      ctx.beginPath();
+      ctx.moveTo(x, y - trunkHeight - 60 * scale);
+      ctx.lineTo(x - 40 * scale, y - trunkHeight);
+      ctx.lineTo(x + 40 * scale, y - trunkHeight);
+      ctx.closePath();
+      ctx.fill();
+      break;
 
-            ctx.fillStyle = leafColor;
-            const leafSize = 25 * scale;
-            ctx.beginPath();
-            ctx.arc(x, y - trunkHeight - 40 * scale, leafSize, 0, Math.PI * 2);
-            ctx.arc(x - 20 * scale, y - trunkHeight - 20 * scale, leafSize, 0, Math.PI * 2);
-            ctx.arc(x + 20 * scale, y - trunkHeight - 20 * scale, leafSize, 0, Math.PI * 2);
-            ctx.fill();
-            break;
-        }
-      }
+    case 2:
+      ctx.fillStyle = '#8B4513';
+      ctx.fillRect(x - trunkWidth / 2, y - trunkHeight, trunkWidth, trunkHeight);
 
-      let lastTime = 0;
-      function animate(currentTime) {
-        if (currentTime - lastTime < 16) {
-          requestAnimationFrame(animate);
-          return;
-        }
-        lastTime = currentTime;
+      ctx.fillStyle = leafColor;
+      const leafSize = 25 * scale;
+      ctx.beginPath();
+      ctx.arc(x, y - trunkHeight - 40 * scale, leafSize, 0, Math.PI * 2);
+      ctx.arc(x - 20 * scale, y - trunkHeight - 20 * scale, leafSize, 0, Math.PI * 2);
+      ctx.arc(x + 20 * scale, y - trunkHeight - 20 * scale, leafSize, 0, Math.PI * 2);
+      ctx.fill();
+      break;
+  }
+}
 
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        setBackground();
+let lastTime = 0;
+function animate(currentTime) {
+  if (currentTime - lastTime < 16) {
+    requestAnimationFrame(animate);
+    return;
+  }
+  lastTime = currentTime;
 
-        clouds.forEach(cloud => {
-          cloud.update();
-          cloud.draw();
-        });
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  setBackground();
 
-        trees.forEach(tree => drawTree(tree));
+  clouds.forEach(cloud => {
+    cloud.update();
+    cloud.draw();
+  });
 
-        // 風のパーティクルを描画
-        windParticles.forEach(particle => {
-          particle.update();
-          particle.draw();
-        });
+  trees.forEach(tree => drawTree(tree));
 
-        particles.forEach(particle => {
-          particle.update();
-          particle.draw();
-        });
+  windParticles.forEach(particle => {
+    particle.update();
+    particle.draw();
+  });
 
-        if (location.search.includes('debug')) {
-          ctx.fillStyle = '#000000';
-          ctx.font = '20px Arial';
-          ctx.fillText(`Season: ${currentSeason}`, 10, 30);
-          ctx.fillText(`Weather: ${currentWeather}`, 10, 60);
-          ctx.fillText(`Time: ${currentTime}`, 10, 90);
-          ctx.fillText(`Wind: ${windStrength.toFixed(1)}`, 10, 120);
-        }
-        requestAnimationFrame(animate);
-      }
+  particles.forEach(particle => {
+    particle.update();
+    particle.draw();
+  });
 
-      initTrees();
-      initParticles();
-      initClouds();
-      initWindParticles();
-      animate(0);
+  if (location.search.includes('debug')) {
+    ctx.fillStyle = '#000000';
+    ctx.font = '20px Arial';
+    ctx.fillText(`Season: ${currentSeason}`, 10, 30);
+    ctx.fillText(`Weather: ${currentWeather}`, 10, 60);
+    ctx.fillText(`Time: ${currentTime}`, 10, 90);
+    ctx.fillText(`Wind: ${windStrength.toFixed(1)}`, 10, 120);
+  }
+  requestAnimationFrame(animate);
+}
+
+initTrees();
+initParticles();
+initClouds();
+initWindParticles();
+animate(0);
     </script>
   </body>
 </html>
